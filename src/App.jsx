@@ -296,6 +296,7 @@ export default function MonthlyBillsApp() {
     setName(bill.name);
     setAmount(String(bill.amount));
     setDueDay(String(bill.dueDay));
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function cancelEdit() {
@@ -458,7 +459,7 @@ export default function MonthlyBillsApp() {
             </p>
 
             {notificationPermission !== "granted" && (
-              <button onClick={requestNotifications} style={buttonStyle(false)}>
+              <button type="button" onClick={requestNotifications} style={buttonStyle(false)}>
                 Enable Notifications
               </button>
             )}
@@ -598,13 +599,14 @@ export default function MonthlyBillsApp() {
                 <h2 style={{ margin: 0 }}>Your bills</h2>
 
                 <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-                  <button style={buttonStyle(filter === "all")} onClick={() => setFilter("all")}>
+                  <button type="button" style={buttonStyle(filter === "all")} onClick={() => setFilter("all")}>
                     All
                   </button>
-                  <button style={buttonStyle(filter === "paid")} onClick={() => setFilter("paid")}>
+                  <button type="button" style={buttonStyle(filter === "paid")} onClick={() => setFilter("paid")}>
                     Paid
                   </button>
                   <button
+                    type="button"
                     style={buttonStyle(filter === "unpaid")}
                     onClick={() => setFilter("unpaid")}
                   >
@@ -692,6 +694,7 @@ export default function MonthlyBillsApp() {
 
                           <div style={{ display: "flex", gap: "8px", alignItems: "flex-start", flexWrap: "wrap" }}>
                             <button
+                              type="button"
                               style={buttonStyle(true)}
                               onClick={() => togglePaid(bill.id)}
                             >
@@ -699,6 +702,7 @@ export default function MonthlyBillsApp() {
                             </button>
 
                             <button
+                              type="button"
                               style={buttonStyle(false)}
                               onClick={() => startEditBill(bill)}
                             >
@@ -706,6 +710,7 @@ export default function MonthlyBillsApp() {
                             </button>
 
                             <button
+                              type="button"
                               style={buttonStyle(false)}
                               onClick={() => deleteBill(bill.id)}
                             >
