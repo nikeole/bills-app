@@ -119,6 +119,7 @@ export default function MonthlyBillsApp() {
   const [saveMessage, setSaveMessage] = useState("");
   const [hasLoaded, setHasLoaded] = useState(false);
   const [monthlyBudget, setMonthlyBudget] = useState("");
+  const [editingBillId, setEditingBillId] = useState(null);
 
   const cycleId = getCycleId(new Date());
   const cycleStart = getCycleStart(new Date());
@@ -195,6 +196,12 @@ export default function MonthlyBillsApp() {
     return budget - outstanding;
   }, [monthlyBudget, outstanding]);
 
+  const budgetUsed = useMemo(() => {
+    const budget = Number(monthlyBudget || 0);
+    if (!budget || budget <= 0) return 0;
+    return Math.min((outstanding / budget) * 100, 100);
+  }, [monthlyBudget, outstanding]);
+
   useEffect(() => {
     if (!remindersEnabled) return;
     if (!("Notification" in window)) return;
@@ -248,19 +255,52 @@ export default function MonthlyBillsApp() {
     if (Number.isNaN(numericAmount) || Number.isNaN(numericDueDay)) return;
     if (numericDueDay < 1 || numericDueDay > 31) return;
 
-    const newBill = {
-      id:
-        typeof crypto !== "undefined" && crypto.randomUUID
-          ? crypto.randomUUID()
-          : String(Date.now()),
-      name: name.trim(),
-      amount: numericAmount,
-      dueDay: numericDueDay,
-      createdAt: new Date().toISOString(),
-      lastPaidCycleId: null,
-    };
+    if (editingBillId) {
+      setBills((prev) =>
+        prev.map((bill) =>
+          bill.id === editingBillId
+            ? {
+                ...bill,
+                name: name.trim(),
+                amount: numericAmount,
+                dueDay: numericDueDay,
+              }
+            : bill
+        )
+      );
+      setEditingBillId(null);
+      setSaveMessage("Bill updated successfully.");
+    } else {
+      const newBill = {
+        id:
+          typeof crypto !== "undefined" && crypto.randomUUID
+            ? crypto.randomUUID()
+            : String(Date.now()),
+        name: name.trim(),
+        amount: numericAmount,
+        dueDay: numericDueDay,
+        createdAt: new Date().toISOString(),
+        lastPaidCycleId: null,
+      };
 
-    setBills((prev) => [newBill, ...prev]);
+      setBills((prev) => [newBill, ...prev]);
+    }
+
+    setName("");
+    setAmount("");
+    setDueDay("");
+  }
+
+  function startEditBill(bill) {
+    setEditingBillId(bill.id);
+    setName(bill.name);
+    setAmount(String(bill.amount));
+    setDueDay(String(bill.dueDay));
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function cancelEdit() {
+    setEditingBillId(null);
     setName("");
     setAmount("");
     setDueDay("");
@@ -357,6 +397,30 @@ export default function MonthlyBillsApp() {
                 ? `${remainingBudget < 0 ? "Over by" : "Remaining"} ${currency(Math.abs(remainingBudget))}`
                 : "Add your budget below"}
             </div>
+            <div style={{ marginTop: "12px" }}>
+              <div
+                style={{
+                  height: "10px",
+                  width: "100%",
+                  background: "#e5e7eb",
+                  borderRadius: "999px",
+                  overflow: "hidden",
+                }}
+              >
+                <div
+                  style={{
+                    height: "100%",
+                    width: `${budgetUsed}%`,
+                    background: budgetUsed >= 100 ? "#dc2626" : budgetUsed >= 75 ? "#f59e0b" : "#16a34a",
+                    borderRadius: "999px",
+                    transition: "width 0.3s ease",
+                  }}
+                />
+              </div>
+              <div style={{ marginTop: "8px", fontSize: "12px", color: "#64748b" }}>
+                {monthlyBudget ? `${Math.round(budgetUsed)}% of budget committed to unpaid bills` : "Set a monthly budget to see progress"}
+              </div>
+            </div>
           </div>
 
           <div style={cardStyle()}>
@@ -410,7 +474,7 @@ export default function MonthlyBillsApp() {
           }}
         >
           <div style={cardStyle()}>
-            <h2 style={{ marginTop: 0 }}>Budget and bills</h2>
+            <h2 style={{ marginTop: 0 }}>{editingBillId ? "Edit bill" : "Budget and bills"}</h2>
 
             <div style={{ marginBottom: "18px", padding: "14px", borderRadius: "14px", background: "#f8fafc", border: "1px solid #e5e7eb" }}>
               <label style={{ display: "block", marginBottom: "6px", fontWeight: 600 }}>
@@ -498,8 +562,18 @@ export default function MonthlyBillsApp() {
               </div>
 
               <button type="submit" style={{ ...buttonStyle(true), width: "100%", marginBottom: "10px" }}>
-                Add Bill
+                {editingBillId ? "Save Changes" : "Add Bill"}
               </button>
+
+              {editingBillId && (
+                <button
+                  type="button"
+                  onClick={cancelEdit}
+                  style={{ ...buttonStyle(false), width: "100%", marginBottom: "10px" }}
+                >
+                  Cancel Edit
+                </button>
+              )}
             </form>
 
             <button
@@ -623,6 +697,13 @@ export default function MonthlyBillsApp() {
                               onClick={() => togglePaid(bill.id)}
                             >
                               {bill.isPaid ? "Mark Unpaid" : "Mark Paid"}
+                            </button>
+
+                            <button
+                              style={buttonStyle(false)}
+                              onClick={() => startEditBill(bill)}
+                            >
+                              Edit
                             </button>
 
                             <button
