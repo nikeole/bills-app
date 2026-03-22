@@ -296,7 +296,6 @@ export default function MonthlyBillsApp() {
     setName(bill.name);
     setAmount(String(bill.amount));
     setDueDay(String(bill.dueDay));
-    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function cancelEdit() {
