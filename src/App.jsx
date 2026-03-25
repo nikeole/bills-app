@@ -174,17 +174,20 @@ export default function App() {
 
   const totals = useMemo(() => {
     const paid = paidMap[monthKey] || {};
-    const due = monthBills.reduce((sum, b) => sum + Number(b.amount || 0), 0);
-    const paidAmt = monthBills.reduce((sum, b) => sum + (paid[b.id] ? Number(b.amount || 0) : 0), 0);
-    const unpaidBills = due - paidAmt;
-    const actualRemainingBudget = Number(monthlyBudget || 0) - due;
-    const cashRemainingAfterPayments = Number(monthlyBudget || 0) - paidAmt;
+    const totalBills = monthBills.reduce((sum, b) => sum + Number(b.amount || 0), 0);
+    const totalPaid = monthBills.reduce((sum, b) => sum + (paid[b.id] ? Number(b.amount || 0) : 0), 0);
+    const totalUnpaid = totalBills - totalPaid;
+    const budget = Number(monthlyBudget || 0);
+
+    const actualRemainingBudget = budget - totalBills;
+    const cashLeftRightNow = budget - totalPaid;
+
     return {
-      due,
-      paid: paidAmt,
-      remaining: unpaidBills,
+      totalBills,
+      totalPaid,
+      totalUnpaid,
       actualRemainingBudget,
-      cashRemainingAfterPayments,
+      cashLeftRightNow,
     };
   }, [monthBills, monthKey, paidMap, monthlyBudget]);
 
@@ -302,18 +305,34 @@ export default function App() {
           <CardContent className="space-y-4 pt-0">
             <div className="grid grid-cols-1 gap-3 md:grid-cols-5">
               <SummaryTile label="Monthly budget" value={monthlyBudget} />
-              <SummaryTile label="Bills due" value={totals.due} />
-              <SummaryTile label="Bills paid" value={totals.paid} positive />
-              <SummaryTile label="Bills left to pay" value={totals.remaining} emphasize />
+              <SummaryTile label="Total bills this month" value={totals.totalBills} />
+              <SummaryTile label="Already paid" value={totals.totalPaid} positive />
+              <SummaryTile label="Still to pay" value={totals.totalUnpaid} emphasize />
               <SummaryTile label="Actual remaining budget" value={totals.actualRemainingBudget} positive={totals.actualRemainingBudget >= 0} emphasize={totals.actualRemainingBudget < 0} />
             </div>
+
+            <Card className="shadow-sm">
+              <CardContent className="py-4">
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                  <div>
+                    <div className="text-sm font-medium">How this works</div>
+                    <p className="text-xs text-neutral-600 mt-1">Actual remaining budget = monthly budget minus all bills due for the month. This number stays fixed even after you mark bills as paid.</p>
+                  </div>
+                  <div className="rounded-xl border bg-neutral-50 p-4">
+                    <div className="text-xs uppercase tracking-wide text-neutral-500">Cash left right now</div>
+                    <div className="text-2xl font-semibold">€{Number(totals.cashLeftRightNow || 0).toFixed(2)}</div>
+                    <p className="mt-1 text-xs text-neutral-600">This one changes as you mark bills paid, so you can track cash flow separately.</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
             <Card className="shadow-sm border-dashed">
               <CardContent className="py-4">
                 <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
                   <div>
                     <div className="text-sm font-medium">Monthly budget</div>
-                    <p className="text-xs text-neutral-600">This stays based on your full monthly budget and total bills due, so marking bills as paid does not change the actual remaining budget figure.</p>
+                    <p className="text-xs text-neutral-600">Your actual remaining budget is based on your monthly budget minus all bills due for that month. Marking a bill as paid only affects the separate cash-left-right-now view.</p>
                   </div>
                   <div className="grid gap-2 md:w-64">
                     <Label htmlFor="monthly-budget">Set monthly budget (€)</Label>
@@ -323,7 +342,7 @@ export default function App() {
                       step="0.01"
                       min="0"
                       value={monthlyBudget}
-                      onChange={(e) => setMonthlyBudget(e.target.value)}
+                      onChange={(e) => setMonthlyBudget(Number(e.target.value || 0))}
                       placeholder="0.00"
                     />
                   </div>
@@ -429,7 +448,7 @@ function Tips() {
         <CardContent className="text-sm text-neutral-600 space-y-1">
           <p>• Add your bills once. Choose how often they recur (monthly, every N months, annual) and a start month.</p>
           <p>• Pick a month at the top to see what’s due, then mark items as paid.</p>
-          <p>• Set your monthly budget once. The app keeps your actual remaining budget based on total bills due, so paying a bill does not reduce that figure again.</p>
+          <p>• Set your monthly budget once. Your actual remaining budget stays fixed for the month based on all bills due, while cash left right now changes only when you mark bills as paid.</p>
           <p>• Everything saves to your browser (no sign-in). Export/Import to back up or move devices.</p>
         </CardContent>
       </Card>
