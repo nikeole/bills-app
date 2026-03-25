@@ -303,13 +303,30 @@ export default function App() {
           </CardHeader>
 
           <CardContent className="space-y-4 pt-0">
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-5">
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-5">
               <SummaryTile label="Monthly budget" value={monthlyBudget} />
               <SummaryTile label="Total bills this month" value={totals.totalBills} />
               <SummaryTile label="Already paid" value={totals.totalPaid} positive />
               <SummaryTile label="Still to pay" value={totals.totalUnpaid} emphasize />
               <SummaryTile label="Actual remaining budget" value={totals.actualRemainingBudget} positive={totals.actualRemainingBudget >= 0} emphasize={totals.actualRemainingBudget < 0} />
             </div>
+
+            <Card className="shadow-sm border-2">
+              <CardContent className="py-5">
+                <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <div className="text-xs uppercase tracking-wide text-neutral-500">Actual remaining budget</div>
+                    <div className="text-3xl font-bold">€{Number(totals.actualRemainingBudget || 0).toFixed(2)}</div>
+                    <p className="mt-1 text-sm text-neutral-600">This is your monthly budget minus all bills due for the selected month. It does not change when bills are marked as paid.</p>
+                  </div>
+                  <div className="rounded-xl border bg-neutral-50 p-4 md:min-w-72">
+                    <div className="text-xs uppercase tracking-wide text-neutral-500">Cash left right now</div>
+                    <div className="text-2xl font-semibold">€{Number(totals.cashLeftRightNow || 0).toFixed(2)}</div>
+                    <p className="mt-1 text-xs text-neutral-600">This one changes when you mark bills as paid.</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
             <Card className="shadow-sm">
               <CardContent className="py-4">
